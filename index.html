@@ -77,7 +77,14 @@ h1 { margin:0 0 .3rem; font-size:clamp(1.4rem,1.15rem + 1.15vw,2rem); line-heigh
 .status.ready { background:color-mix(in srgb,var(--green) 18%,var(--surface)); color:var(--green); }
 .status.soon { background:color-mix(in srgb,var(--amber) 20%,var(--surface)); color:var(--amber); }
 .status.empty { background:var(--surface-2); color:var(--muted); }
-
+.directory-modal { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.directory-modal[hidden] { display:none; }
+.directory-content { background:var(--surface); border-radius:var(--radius); padding:1.2rem; width:min(360px,88vw); max-height:70vh; overflow-y:auto; box-shadow:var(--shadow); }
+.directory-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.8rem; }
+.directory-close { background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text); }
+.directory-list { list-style:none; padding:0; margin:0; }
+.directory-list li { padding:.6rem 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:.6rem; cursor:pointer; }
+.directory-list li:hover { background:var(--surface-2); }
 @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -119,12 +126,21 @@ h1 { margin:0 0 .3rem; font-size:clamp(1.4rem,1.15rem + 1.15vw,2rem); line-heigh
         <div class="hole-ring" id="holeRing"></div>
       </div>
       <div class="finger-stop" id="fingerStop"></div>
-      <div class="dial-hub" id="dialHub">Набери номер</div>
+     <button type="button" class="dial-hub" id="dialHub">Набери номер</button>
     </div>
   </div>
   <div class="dial-readout" id="dialReadout">Номер не набран</div>
 
   <section class="cartridge-grid" id="cartridges"></section>
+</div>
+<div class="directory-modal" id="directoryModal" hidden>
+  <div class="directory-content">
+    <div class="directory-header">
+      <h3>Справочник номеров</h3>
+      <button type="button" class="directory-close" id="directoryClose">×</button>
+    </div>
+    <ul class="directory-list" id="directoryList"></ul>
+  </div>
 </div>
 
 <script>
@@ -180,12 +196,11 @@ function renderCartridges() {
 const SLOTS = 11;
 const STEP = 360 / SLOTS;
 const STOP_ANGLE = 120; // фиксированное положение ограничителя на корпусе (визуально, как на образце)
-const DIAL_ORDER = ['1','2','3','4','5','6','7','8','9','0'];
+const DIAL_ORDER = ['0','9','8','7','6','5','4','3','2','1'];
 
 function slotIndex(num) {
-  // 0 = пустой сектор (сразу после ограничителя), 1..9 = цифры 1..9, 10 = цифра "0" (сразу перед ограничителем)
-  if (num === '0') return 10;
-  return DIAL_ORDER.indexOf(num) + 1;
+  // По часовой от ограничителя: 0,9,8,7,6,5,4,3,2,1, затем пустой сектор (idx 10) обратно к ограничителю
+  return DIAL_ORDER.indexOf(num);
 }
 
 function restAngleOf(num) {
@@ -296,7 +311,29 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   const root = document.documentElement;
   root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 });
+function renderDirectory() {
+  const list = document.getElementById('directoryList');
+  list.innerHTML = DIRECTORY.map(d =>
+    `<li data-number="${d.number}"><span>${d.number}</span><span>${d.title}</span></li>`
+  ).join('');
+  list.querySelectorAll('li').forEach(li => {
+    li.addEventListener('click', () => {
+      document.getElementById('directoryModal').hidden = true;
+      dialNumber(li.dataset.number);
+    });
+  });
+}
 
+document.getElementById('dialHub').addEventListener('click', () => {
+  renderDirectory();
+  document.getElementById('directoryModal').hidden = false;
+});
+document.getElementById('directoryClose').addEventListener('click', () => {
+  document.getElementById('directoryModal').hidden = true;
+});
+document.getElementById('directoryModal').addEventListener('click', (e) => {
+  if (e.target.id === 'directoryModal') e.target.hidden = true;
+});
 renderCartridges();
 renderDial();
 setContext('personal');
