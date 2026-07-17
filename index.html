@@ -256,7 +256,7 @@ function dialNumber(num) {
 
   outer.classList.add('dialing');
   const pull = pullAngleFor(num);
-  const pullMs = 140 + pull * 3.5;
+  const pullMs = 140 + pull * 5.5;
 
   readout.innerHTML = `Набираю: <span class="active-num">${num}</span>`;
   face.style.transition = `transform ${pullMs}ms cubic-bezier(0.55,0,0.85,0.35)`;
