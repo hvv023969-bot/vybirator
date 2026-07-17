@@ -45,10 +45,27 @@ input[type=range] { grid-column:1 / -1; width:100%; height:6px; border-radius:99
 .podium-slot:nth-child(3) { order:3; }
 
 .list { display:grid; gap:.7rem; }
-.item-row { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:.8rem 1rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; }
-.item-row .name { font-weight:700; font-size:.92rem; }
-.item-row .brand { color:var(--muted); font-size:.78rem; }
-.item-row .score { font-weight:800; color:var(--primary); }
+.item-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.item-card .item-row { padding:.8rem 1rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; cursor:pointer; border:none; }
+.item-card .item-row .name { font-weight:700; font-size:.92rem; }
+.item-card .item-row .brand { color:var(--muted); font-size:.78rem; }
+.score-wrap { display:flex; align-items:center; gap:.5rem; }
+.score-wrap .score { font-weight:800; color:var(--primary); }
+.chevron { display:inline-block; color:var(--muted); font-size:1.1rem; transition:transform .2s ease; }
+.item-row.open .chevron { transform:rotate(90deg); }
+
+.breakdown { padding:.4rem 1rem 1rem; display:grid; gap:.5rem; border-top:1px solid var(--border); }
+.bd-row { display:grid; grid-template-columns:9rem 1fr 11rem; align-items:center; gap:.6rem; }
+.bd-label { font-size:.8rem; color:var(--text); font-weight:600; }
+.bd-bar-wrap { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
+.bd-bar { display:block; height:100%; background:var(--primary); border-radius:999px; }
+.bd-nums { font-size:.78rem; color:var(--muted); text-align:right; white-space:nowrap; }
+.bd-nums b { color:var(--primary); }
+
+@media (max-width:520px) {
+  .bd-row { grid-template-columns:1fr; gap:.25rem; }
+  .bd-nums { text-align:left; }
+}
 .loading, .error { text-align:center; color:var(--muted); padding:2rem 0; }
 </style>
 </head>
@@ -89,6 +106,7 @@ function normalize(arr) {
   return arr.map(v => ((v - min) / (max - min)) * 100);
 }
 
+/* ===== 1. Обновлённая computeScores — сохраняет разбивку по критериям ===== */
 function computeScores() {
   const cols = {};
   CRITERIA.forEach(c => {
@@ -100,8 +118,14 @@ function computeScores() {
   const totalWeight = Object.values(weights).reduce((a,b) => a+b, 0) || 1;
   return items.map((it, i) => {
     let sum = 0;
-    CRITERIA.forEach(c => { sum += cols[c.key][i] * (weights[c.key] / totalWeight); });
-    return { ...it, score: sum };
+    const breakdown = CRITERIA.map(c => {
+      const normScore = cols[c.key][i];
+      const weight = weights[c.key];
+      const contribution = normScore * (weight / totalWeight);
+      sum += contribution;
+      return { key: c.key, label: c.label, normScore, weight, contribution };
+    });
+    return { ...it, score: sum, breakdown };
   }).sort((a,b) => b.score - a.score);
 }
 
@@ -122,6 +146,7 @@ function renderControls() {
   });
 }
 
+/* ===== 2. Обновлённый renderResults — добавляет раскрывающийся блок разбивки ===== */
 function renderResults() {
   const ranked = computeScores();
   const top3 = ranked.slice(0,3);
@@ -138,13 +163,36 @@ function renderResults() {
 
   const list = document.getElementById('list');
   list.innerHTML = ranked.map((it,i) => `
-    <div class="item-row">
-      <div>
-        <div class="name">${i+1}. ${it.name}</div>
-        <div class="brand">${it.brand} · ${it.price} руб · ${it.cost_per_clean} руб/уборка</div>
+    <div class="item-card">
+      <div class="item-row" data-idx="${i}">
+        <div>
+          <div class="name">${i+1}. ${it.name}</div>
+          <div class="brand">${it.brand} · ${it.price} руб · ${it.cost_per_clean} руб/уборка</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">${it.score.toFixed(1)}</div>
+          <span class="chevron">&rsaquo;</span>
+        </div>
       </div>
-      <div class="score">${it.score.toFixed(1)}</div>
+      <div class="breakdown" id="bd_${i}" hidden>
+        ${it.breakdown.map(b => `
+          <div class="bd-row">
+            <span class="bd-label">${b.label}</span>
+            <span class="bd-bar-wrap"><span class="bd-bar" style="width:${b.normScore.toFixed(0)}%"></span></span>
+            <span class="bd-nums">${b.normScore.toFixed(0)} балл. × ${b.weight}% = <b>${b.contribution.toFixed(1)}</b></span>
+          </div>`).join('')}
+      </div>
     </div>`).join('');
+
+  list.querySelectorAll('.item-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = row.dataset.idx;
+      const bd = document.getElementById('bd_' + idx);
+      const isOpen = !bd.hidden;
+      bd.hidden = isOpen;
+      row.classList.toggle('open', !isOpen);
+    });
+  });
 }
 
 fetch('../data/vacuum_items.csv')
