@@ -1,0 +1,12 @@
+name,brand,price,watts,power,lightness,noise,runtime,smoothFloor,depreciation_per_clean,energy_cost_per_clean,time_cost_per_clean,cost_per_clean,cost_score
+Xiaomi G20 Lite,Xiaomi,18000,150,60,86,82,72,94,25.00,0.180,140.2,165.4,42.5
+Dreame R10s,Dreame,24000,300,72,80,74,78,88,33.33,0.361,140.2,173.9,14.3
+Midea VSS GX5,Midea,16000,250,63,76,76,74,84,22.22,0.300,140.2,162.8,51.2
+Roborock H5,Roborock,27000,350,78,72,68,76,78,37.50,0.421,140.2,178.2,0.0
+Tuvio TS02EBSW,Tuvio,12000,390,74,70,68,69,76,16.67,0.469,140.2,157.4,69.1
+Weissgauff V24 BLDC 400,Weissgauff,15000,400,82,64,66,72,70,20.83,0.481,140.2,161.6,55.1
+Weissgauff V12 BLDC 400,Weissgauff,16500,400,86,60,64,75,68,22.92,0.481,140.2,163.6,48.5
+Redroad X18,Redroad,14000,600,97,50,58,73,55,19.44,0.721,140.2,160.4,59.1
+REDMOND RV-UR370,REDMOND,7000,350,58,73,78,64,80,9.72,0.421,140.2,150.4,92.4
+Haier HVC150,Haier,5500,150,48,78,76,60,79,7.64,0.180,140.2,148.1,100.0
+CGCleaner Home 2,CGCleaner,13000,280,64,75,73,71,83,18.06,0.337,140.2,158.6,65.1
